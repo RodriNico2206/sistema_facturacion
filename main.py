@@ -1,9 +1,9 @@
-import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 from database import Database
 from models import Cliente, Producto, Factura, DetalleFactura
 from invoice_generator import InvoiceGenerator
 from datetime import datetime
+import pandas as pd, os, tkinter as tk
 
 class FacturacionApp:
 
@@ -512,7 +512,7 @@ class FacturacionApp:
                     messagebox.showerror("Error", f"Error al eliminar cupón: {str(e)}")
         else:
             messagebox.showerror("Error", "Seleccione un cupón para eliminar")
-    
+
     def setup_clientes_tab(self):
         # Treeview para clientes (cambiado RUC por DNI)
         columns = ('id', 'nombre', 'dni', 'direccion', 'telefono', 'email')
@@ -524,14 +524,28 @@ class FacturacionApp:
         
         self.clientes_tree.pack(fill='both', expand=True, padx=5, pady=5)
         
-        # Botones para clientes
+        # Botones para clientes - CON BOTÓN DE IMPORTACIÓN
         button_frame = ttk.Frame(self.frame_clientes)
         button_frame.pack(fill='x', pady=5)
         
-        ttk.Button(button_frame, text="Agregar Cliente", command=self.agregar_cliente).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="Editar Cliente", command=self.editar_cliente).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="Eliminar Cliente", command=self.eliminar_cliente).pack(side='left', padx=5)
-    
+        # Botones a la izquierda
+        left_button_frame = ttk.Frame(button_frame)
+        left_button_frame.pack(side='left')
+        
+        ttk.Button(left_button_frame, text="Agregar Cliente", command=self.agregar_cliente).pack(side='left', padx=5)
+        ttk.Button(left_button_frame, text="Editar Cliente", command=self.editar_cliente).pack(side='left', padx=5)
+        ttk.Button(left_button_frame, text="Eliminar Cliente", command=self.eliminar_cliente).pack(side='left', padx=5)
+        
+        # Botones a la derecha (Importación/Exportación)
+        right_button_frame = ttk.Frame(button_frame)
+        right_button_frame.pack(side='right')
+        
+        ttk.Button(right_button_frame, text="Importar desde Excel", 
+                command=self.importar_clientes_excel).pack(side='right', padx=5)
+        ttk.Button(right_button_frame, text="Exportar a Excel", 
+                command=self.exportar_clientes_excel).pack(side='right', padx=5)
+
+
     def setup_productos_tab(self):
         # Treeview para productos
         columns = ('id', 'codigo', 'nombre', 'descripcion', 'precio', 'stock')
@@ -543,14 +557,226 @@ class FacturacionApp:
         
         self.productos_tree_tab.pack(fill='both', expand=True, padx=5, pady=5)
         
-        # Botones para productos
+        # Botones para productos - CON BOTÓN DE IMPORTACIÓN
         button_frame = ttk.Frame(self.frame_productos)
         button_frame.pack(fill='x', pady=5)
         
-        ttk.Button(button_frame, text="Agregar Producto", command=self.agregar_producto).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="Editar Producto", command=self.editar_producto).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="Eliminar Producto", command=self.eliminar_producto).pack(side='left', padx=5)
-    
+        # Botones a la izquierda
+        left_button_frame = ttk.Frame(button_frame)
+        left_button_frame.pack(side='left')
+        
+        ttk.Button(left_button_frame, text="Agregar Producto", command=self.agregar_producto).pack(side='left', padx=5)
+        ttk.Button(left_button_frame, text="Editar Producto", command=self.editar_producto).pack(side='left', padx=5)
+        ttk.Button(left_button_frame, text="Eliminar Producto", command=self.eliminar_producto).pack(side='left', padx=5)
+        
+        # Botones a la derecha (Importación/Exportación)
+        right_button_frame = ttk.Frame(button_frame)
+        right_button_frame.pack(side='right')
+        
+        ttk.Button(right_button_frame, text="Importar desde Excel", 
+                command=self.importar_productos_excel).pack(side='right', padx=5)
+        ttk.Button(right_button_frame, text="Exportar a Excel", 
+                command=self.exportar_productos_excel).pack(side='right', padx=5)
+
+
+    def exportar_clientes_excel(self):
+        """Exporta clientes a Excel"""
+        try:
+            file_path = filedialog.asksaveasfilename(
+                title="Guardar clientes como Excel",
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")]
+            )
+            
+            if not file_path:
+                return
+            
+            clientes = self.db.fetch_all("SELECT nombre, dni, direccion, telefono, email FROM clientes ORDER BY nombre")
+            
+            df = pd.DataFrame(clientes, columns=['nombre', 'dni', 'direccion', 'telefono', 'email'])
+            df.to_excel(file_path, index=False)
+            
+            messagebox.showinfo("Éxito", f"Clientes exportados correctamente a: {file_path}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al exportar clientes: {str(e)}")
+
+    def exportar_productos_excel(self):
+        """Exporta productos a Excel"""
+        try:
+            file_path = filedialog.asksaveasfilename(
+                title="Guardar productos como Excel",
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")]
+            )
+            
+            if not file_path:
+                return
+            
+            productos = self.db.fetch_all("SELECT codigo, nombre, descripcion, precio, stock FROM productos ORDER BY nombre")
+            
+            df = pd.DataFrame(productos, columns=['codigo', 'nombre', 'descripcion', 'precio', 'stock'])
+            df.to_excel(file_path, index=False)
+            
+            messagebox.showinfo("Éxito", f"Productos exportados correctamente a: {file_path}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al exportar productos: {str(e)}")
+
+
+
+    def importar_clientes_excel(self):
+        """Importa clientes desde un archivo Excel"""
+        try:
+            file_path = filedialog.askopenfilename(
+                title="Seleccionar archivo Excel de clientes",
+                filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")]
+            )
+            
+            if not file_path:
+                return
+            
+            # Leer el archivo Excel
+            df = pd.read_excel(file_path)
+            
+            # Verificar columnas mínimas requeridas
+            required_columns = ['nombre']
+            if not all(col in df.columns for col in required_columns):
+                messagebox.showerror("Error", f"El archivo debe contener las columnas: {required_columns}")
+                return
+            
+            # Procesar cada fila
+            success_count = 0
+            error_count = 0
+            errors = []
+            
+            for index, row in df.iterrows():
+                try:
+                    nombre = str(row['nombre']).strip()
+                    if not nombre:
+                        continue
+                    
+                    dni = str(row['dni']).strip() if 'dni' in df.columns and pd.notna(row.get('dni')) else ""
+                    direccion = str(row['direccion']).strip() if 'direccion' in df.columns and pd.notna(row.get('direccion')) else ""
+                    telefono = str(row['telefono']).strip() if 'telefono' in df.columns and pd.notna(row.get('telefono')) else ""
+                    email = str(row['email']).strip() if 'email' in df.columns and pd.notna(row.get('email')) else ""
+                    
+                    # Verificar si el cliente ya existe
+                    existing_client = None
+                    if dni:
+                        existing_client = self.db.fetch_one("SELECT id FROM clientes WHERE dni = ?", (dni,))
+                    if not existing_client:
+                        existing_client = self.db.fetch_one("SELECT id FROM clientes WHERE nombre = ?", (nombre,))
+                    
+                    if existing_client:
+                        # Actualizar cliente existente
+                        self.db.execute_query(
+                            "UPDATE clientes SET dni=?, direccion=?, telefono=?, email=? WHERE id=?",
+                            (dni, direccion, telefono, email, existing_client[0])
+                        )
+                    else:
+                        # Insertar nuevo cliente
+                        self.db.execute_query(
+                            "INSERT INTO clientes (nombre, dni, direccion, telefono, email) VALUES (?, ?, ?, ?, ?)",
+                            (nombre, dni, direccion, telefono, email)
+                        )
+                    
+                    success_count += 1
+                    
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f"Fila {index + 2}: {str(e)}")
+            
+            # Actualizar la lista de clientes
+            self.load_clientes()
+            
+            # Mostrar resultados
+            message = f"Importación completada:\n- Correctos: {success_count}\n- Errores: {error_count}"
+            if errors:
+                message += f"\n\nErrores:\n" + "\n".join(errors[:5])  # Mostrar solo primeros 5 errores
+                if error_count > 5:
+                    message += f"\n... y {error_count - 5} más"
+            
+            messagebox.showinfo("Resultado de importación", message)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al importar clientes: {str(e)}")
+
+    def importar_productos_excel(self):
+        """Importa productos desde un archivo Excel"""
+        try:
+            file_path = filedialog.askopenfilename(
+                title="Seleccionar archivo Excel de productos",
+                filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")]
+            )
+            
+            if not file_path:
+                return
+            
+            # Leer el archivo Excel
+            df = pd.read_excel(file_path)
+            
+            # Verificar columnas mínimas requeridas
+            required_columns = ['codigo', 'nombre', 'precio']
+            if not all(col in df.columns for col in required_columns):
+                messagebox.showerror("Error", f"El archivo debe contener las columnas: {required_columns}")
+                return
+            
+            # Procesar cada fila
+            success_count = 0
+            error_count = 0
+            errors = []
+            
+            for index, row in df.iterrows():
+                try:
+                    codigo = str(row['codigo']).strip()
+                    nombre = str(row['nombre']).strip()
+                    precio = float(row['precio'])
+                    
+                    if not codigo or not nombre:
+                        continue
+                    
+                    descripcion = str(row['descripcion']).strip() if 'descripcion' in df.columns and pd.notna(row.get('descripcion')) else ""
+                    stock = int(row['stock']) if 'stock' in df.columns and pd.notna(row.get('stock')) else 0
+                    
+                    # Verificar si el producto ya existe
+                    existing_product = self.db.fetch_one("SELECT id FROM productos WHERE codigo = ?", (codigo,))
+                    
+                    if existing_product:
+                        # Actualizar producto existente
+                        self.db.execute_query(
+                            "UPDATE productos SET nombre=?, descripcion=?, precio=?, stock=? WHERE id=?",
+                            (nombre, descripcion, precio, stock, existing_product[0])
+                        )
+                    else:
+                        # Insertar nuevo producto
+                        self.db.execute_query(
+                            "INSERT INTO productos (codigo, nombre, descripcion, precio, stock) VALUES (?, ?, ?, ?, ?)",
+                            (codigo, nombre, descripcion, precio, stock)
+                        )
+                    
+                    success_count += 1
+                    
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f"Fila {index + 2}: {str(e)}")
+            
+            # Actualizar la lista de productos
+            self.load_productos()
+            
+            # Mostrar resultados
+            message = f"Importación completada:\n- Correctos: {success_count}\n- Errores: {error_count}"
+            if errors:
+                message += f"\n\nErrores:\n" + "\n".join(errors[:5])  # Mostrar solo primeros 5 errores
+                if error_count > 5:
+                    message += f"\n... y {error_count - 5} más"
+            
+            messagebox.showinfo("Resultado de importación", message)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al importar productos: {str(e)}")
+
+
     def load_clientes(self):
         # Cargar clientes en el combobox y treeview (cambiado RUC por DNI)
         clientes = self.db.fetch_all("SELECT id, nombre, dni, direccion, telefono, email FROM clientes ORDER BY nombre")
@@ -1024,6 +1250,8 @@ class FacturacionApp:
                     messagebox.showerror("Error", f"Error al eliminar producto: {str(e)}")
         else:
             messagebox.showerror("Error", "Seleccione un producto para eliminar")
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
