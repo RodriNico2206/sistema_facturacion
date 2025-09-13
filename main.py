@@ -6,6 +6,7 @@ from invoice_generator import InvoiceGenerator
 from datetime import datetime
 
 class FacturacionApp:
+
     def __init__(self, root):
         self.root = root
         self.root.title("Sistema de Facturación")
@@ -22,7 +23,75 @@ class FacturacionApp:
         self.setup_ui()
         self.load_clientes()
         self.load_productos()
-    
+
+    def abrir_dialogo_cliente_manual(self):
+        """Abre diálogo para ingresar datos de cliente manualmente"""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Datos del Cliente")
+        dialog.geometry("400x300")
+        dialog.resizable(False, False)
+        
+        # Centrar diálogo
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Campos del formulario
+        ttk.Label(dialog, text="Nombre:*").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        nombre_entry = ttk.Entry(dialog, width=30)
+        nombre_entry.grid(row=0, column=1, padx=10, pady=10)
+        nombre_entry.focus()
+        
+        ttk.Label(dialog, text="DNI:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        dni_entry = ttk.Entry(dialog, width=30)
+        dni_entry.grid(row=1, column=1, padx=10, pady=10)
+        
+        ttk.Label(dialog, text="Dirección:").grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        direccion_entry = ttk.Entry(dialog, width=30)
+        direccion_entry.grid(row=2, column=1, padx=10, pady=10)
+        
+        ttk.Label(dialog, text="Teléfono:").grid(row=3, column=0, padx=10, pady=10, sticky='e')
+        telefono_entry = ttk.Entry(dialog, width=30)
+        telefono_entry.grid(row=3, column=1, padx=10, pady=10)
+        
+        ttk.Label(dialog, text="Email:").grid(row=4, column=0, padx=10, pady=10, sticky='e')
+        email_entry = ttk.Entry(dialog, width=30)
+        email_entry.grid(row=4, column=1, padx=10, pady=10)
+        
+        # Variable para almacenar el cliente manual
+        self.cliente_manual = None
+        
+        def guardar_cliente_manual():
+            nombre = nombre_entry.get().strip()
+            dni = dni_entry.get().strip()
+            
+            if not nombre:
+                messagebox.showerror("Error", "El nombre es obligatorio")
+                return
+            
+            # Crear objeto cliente manual
+            self.cliente_manual = Cliente(
+                nombre=nombre,
+                dni=dni,
+                direccion=direccion_entry.get().strip(),
+                telefono=telefono_entry.get().strip(),
+                email=email_entry.get().strip()
+            )
+            
+            # Actualizar combobox para mostrar el cliente manual
+            self.cliente_combobox.set(f"{nombre} (DNI: {dni}) - MANUAL")
+            dialog.destroy()
+        
+        def cancelar():
+            dialog.destroy()
+        
+        # Botones
+        button_frame = ttk.Frame(dialog)
+        button_frame.grid(row=5, column=0, columnspan=2, pady=20)
+        
+        ttk.Button(button_frame, text="Cancelar", command=cancelar).pack(side='left', padx=10)
+        ttk.Button(button_frame, text="Usar Cliente", command=guardar_cliente_manual).pack(side='right', padx=10)
+
+
     def cargar_configuracion(self):
         """Carga la configuración del sistema desde la base de datos"""
         config_db = self.db.fetch_one("SELECT * FROM configuracion LIMIT 1")
@@ -70,16 +139,28 @@ class FacturacionApp:
         self.setup_productos_tab()
         self.setup_config_tab()
         self.setup_cupones_tab()
-    
+
     def setup_facturacion_tab(self):
         # Frame izquierdo (Selección de cliente y productos)
         left_frame = ttk.Frame(self.frame_facturacion)
         left_frame.pack(side='left', fill='both', expand=True, padx=5, pady=5)
         
         # Selección de cliente
-        ttk.Label(left_frame, text="Seleccionar Cliente:").pack(anchor='w')
-        self.cliente_combobox = ttk.Combobox(left_frame, state="readonly", width=40)
-        self.cliente_combobox.pack(fill='x', pady=5)
+        cliente_frame = ttk.Frame(left_frame)
+        cliente_frame.pack(fill='x', pady=5)
+        
+        ttk.Label(cliente_frame, text="Seleccionar Cliente:").pack(anchor='w')
+        
+        # Frame para combobox y botón
+        cliente_select_frame = ttk.Frame(cliente_frame)
+        cliente_select_frame.pack(fill='x', pady=5)
+        
+        self.cliente_combobox = ttk.Combobox(cliente_select_frame, state="readonly", width=30)
+        self.cliente_combobox.pack(side='left', fill='x', expand=True, padx=(0, 5))
+        
+        # Botón para cliente manual
+        ttk.Button(cliente_select_frame, text="Cliente Manual", 
+                command=self.abrir_dialogo_cliente_manual).pack(side='right')
         
         # Lista de productos
         ttk.Label(left_frame, text="Productos Disponibles:").pack(anchor='w', pady=(10,0))
@@ -106,9 +187,9 @@ class FacturacionApp:
         ttk.Label(payment_frame, text="Método de Pago:").pack(side='left', padx=5)
         self.metodo_pago = tk.StringVar(value="EFECTIVO")
         ttk.Radiobutton(payment_frame, text="Efectivo", variable=self.metodo_pago, value="EFECTIVO", 
-                       command=self.calcular_totales).pack(side='left', padx=5)
+                    command=self.calcular_totales).pack(side='left', padx=5)
         ttk.Radiobutton(payment_frame, text="Débito", variable=self.metodo_pago, value="DEBITO",
-                       command=self.calcular_totales).pack(side='left', padx=5)
+                    command=self.calcular_totales).pack(side='left', padx=5)
         
         # Cupón de descuento
         if self.configuracion['habilitar_cupones']:
@@ -135,7 +216,7 @@ class FacturacionApp:
         self.detalles_tree.column('total', width=100)
         self.detalles_tree.pack(fill='both', expand=True, pady=5)
         
-        # Totales - MODIFICAR ESTA PARTE
+        # Totales
         total_frame = ttk.Frame(right_frame)
         total_frame.pack(fill='x', pady=5)
         
@@ -164,6 +245,7 @@ class FacturacionApp:
         
         ttk.Button(button_frame, text="Generar Factura", command=self.generar_factura).pack(side='right', padx=5)
         ttk.Button(button_frame, text="Limpiar", command=self.limpiar_factura).pack(side='right', padx=5)
+
     
     def setup_config_tab(self):
         """Configura la pestaña de configuración del sistema"""
@@ -613,23 +695,39 @@ class FacturacionApp:
             return
         
         try:
-            # Obtener ID del cliente desde la selección (cambiado RUC por DNI)
-            cliente_nombre = cliente_selection.split(' (DNI:')[0].strip()
-            
-            # Buscar cliente por nombre
-            cliente = self.db.fetch_one("SELECT id, nombre, dni, direccion, telefono, email FROM clientes WHERE nombre = ?", (cliente_nombre,))
-            
-            if not cliente:
-                # Intentar buscar por DNI si no se encuentra por nombre
-                try:
-                    dni = cliente_selection.split('(DNI:')[1].replace(')', '').strip()
-                    cliente = self.db.fetch_one("SELECT id, nombre, dni, direccion, telefono, email FROM clientes WHERE dni = ?", (dni,))
-                except:
-                    cliente = None
-            
-            if not cliente:
-                messagebox.showerror("Error", "Cliente no encontrado en la base de datos")
-                return
+            # Verificar si es cliente manual
+            if hasattr(self, 'cliente_manual') and self.cliente_manual and "MANUAL" in cliente_selection:
+                cliente_obj = self.cliente_manual
+                cliente_obj.id = None  # Importante para que el template detecte que es manual
+                cliente_id = None
+            else:
+                # Obtener ID del cliente desde la selección
+                cliente_nombre = cliente_selection.split(' (DNI:')[0].strip()
+                
+                # Buscar cliente por nombre
+                cliente = self.db.fetch_one("SELECT id, nombre, dni, direccion, telefono, email FROM clientes WHERE nombre = ?", (cliente_nombre,))
+                
+                if not cliente:
+                    # Intentar buscar por DNI si no se encuentra por nombre
+                    try:
+                        dni = cliente_selection.split('(DNI:')[1].replace(')', '').strip()
+                        cliente = self.db.fetch_one("SELECT id, nombre, dni, direccion, telefono, email FROM clientes WHERE dni = ?", (dni,))
+                    except:
+                        cliente = None
+                
+                if not cliente:
+                    messagebox.showerror("Error", "Cliente no encontrado en la base de datos")
+                    return
+                
+                cliente_id = cliente[0]
+                cliente_obj = Cliente(
+                    id=cliente[0], 
+                    nombre=cliente[1], 
+                    dni=cliente[2],
+                    direccion=cliente[3], 
+                    telefono=cliente[4], 
+                    email=cliente[5]
+                )
             
             # Crear número de factura único
             numero_factura = f"FACT-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -654,9 +752,10 @@ class FacturacionApp:
             total = base_imponible + iva
             
             # Insertar factura (con método de pago y descuento)
+            # Para cliente manual, usar cliente_id como NULL
             self.db.execute_query(
                 "INSERT INTO facturas (numero_factura, fecha, cliente_id, subtotal, descuento, iva, total, metodo_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (numero_factura, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), cliente[0], subtotal, descuento, iva, total, self.metodo_pago.get())
+                (numero_factura, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), cliente_id, subtotal, descuento, iva, total, self.metodo_pago.get())
             )
             
             # Obtener ID de la factura insertada
@@ -668,11 +767,15 @@ class FacturacionApp:
             
             # Insertar detalles
             for detalle in self.detalles_temp:
-                # Verificar que el producto existe
-                producto_db = self.db.fetch_one(f"SELECT id FROM productos WHERE CAST(codigo AS INTEGER) = {detalle.producto.codigo}")
-
+                # Buscar producto por código como texto
+                producto_db = self.db.fetch_one("SELECT id FROM productos WHERE codigo = ?", (str(detalle.producto.codigo),))
+                
                 if not producto_db:
-                    raise Exception(f"Producto {detalle.producto.codigo} no encontrado en la base de datos")
+                    # Intentar buscar por nombre si no se encuentra por código
+                    producto_db = self.db.fetch_one("SELECT id FROM productos WHERE nombre = ?", (detalle.producto.nombre,))
+                    
+                if not producto_db:
+                    raise Exception(f"Producto '{detalle.producto.nombre}' (código: {detalle.producto.codigo}) no encontrado en la base de datos")
                 
                 producto_id = producto_db[0]
                 
@@ -693,17 +796,8 @@ class FacturacionApp:
                     "UPDATE cupones SET usos_actuales = usos_actuales + 1 WHERE id = ?",
                     (self.cupon_aplicado['id'],)
                 )
-            
+
             # Generar PDF
-            cliente_obj = Cliente(
-                id=cliente[0], 
-                nombre=cliente[1], 
-                dni=cliente[2],
-                direccion=cliente[3], 
-                telefono=cliente[4], 
-                email=cliente[5]
-            )
-            
             factura_obj = Factura(
                 id=factura_id,
                 numero_factura=numero_factura,
@@ -729,7 +823,6 @@ class FacturacionApp:
             import traceback
             print(traceback.format_exc())
 
-    
     def limpiar_factura(self):
         self.detalles_temp = []
         for item in self.detalles_tree.get_children():
@@ -738,10 +831,16 @@ class FacturacionApp:
         self.cliente_combobox.set('')
         self.metodo_pago.set("EFECTIVO")
         self.cupon_aplicado = None
+        
+        # Limpiar cliente manual si existe
+        if hasattr(self, 'cliente_manual'):
+            self.cliente_manual = None
+        
         if hasattr(self, 'cupon_entry'):
             self.cupon_entry.delete(0, tk.END)
         if hasattr(self, 'cupon_status'):
             self.cupon_status.config(text="")
+
     
     def agregar_cliente(self):
         self.abrir_dialogo_cliente()

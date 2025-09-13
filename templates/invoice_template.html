@@ -12,6 +12,14 @@
         th { background-color: #f2f2f2; }
         .total { font-weight: bold; text-align: right; }
         .discount { color: #d9534f; }
+        .manual-client { 
+            background-color: #fff3cd; 
+            border: 1px solid #ffeaa7;
+            padding: 5px;
+            margin-top: 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -23,9 +31,26 @@
     <div class="info">
         <p><strong>Fecha:</strong> {{ factura.fecha }}</p>
         <p><strong>Cliente:</strong> {{ factura.cliente.nombre }}</p>
+        
+        {% if factura.cliente.dni %}
         <p><strong>DNI:</strong> {{ factura.cliente.dni }}</p>
+        {% endif %}
+        
+        {% if factura.cliente.direccion %}
         <p><strong>Dirección:</strong> {{ factura.cliente.direccion }}</p>
+        {% endif %}
+        
+        {% if factura.cliente.telefono %}
+        <p><strong>Teléfono:</strong> {{ factura.cliente.telefono }}</p>
+        {% endif %}
+        
         <p><strong>Método de Pago:</strong> {{ factura.metodo_pago }}</p>
+        
+        {% if not factura.cliente.id %}
+        <div class="manual-client">
+            <strong>⚠ Cliente Manual - No registrado en base de datos</strong>
+        </div>
+        {% endif %}
     </div>
     
     <table>
