@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Factura {{ factura.numero_factura }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .info { margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .total { font-weight: bold; text-align: right; }
+        .discount { color: #d9534f; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FACTURA</h1>
+        <h2>N° {{ factura.numero_factura }}</h2>
+    </div>
+    
+    <div class="info">
+        <p><strong>Fecha:</strong> {{ factura.fecha }}</p>
+        <p><strong>Cliente:</strong> {{ factura.cliente.nombre }}</p>
+        <p><strong>DNI:</strong> {{ factura.cliente.dni }}</p>
+        <p><strong>Dirección:</strong> {{ factura.cliente.direccion }}</p>
+        <p><strong>Método de Pago:</strong> {{ factura.metodo_pago }}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in factura.detalles %}
+            <tr>
+                <td>{{ detalle.producto.nombre }}</td>
+                <td>{{ detalle.cantidad }}</td>
+                <td>${{ "%.2f"|format(detalle.precio_unitario) }}</td>
+                <td>${{ "%.2f"|format(detalle.total_linea) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="total">
+        <p>Subtotal: ${{ "%.2f"|format(factura.subtotal) }}</p>
+        {% if factura.descuento > 0 %}
+        <p class="discount">Descuento: -${{ "%.2f"|format(factura.descuento) }}</p>
+        {% endif %}
+        <p>IVA ({{ "%.0f"|format((factura.iva / (factura.subtotal - factura.descuento)) * 100 if (factura.subtotal - factura.descuento) > 0 else 0) }}%): ${{ "%.2f"|format(factura.iva) }}</p>
+        <p><strong>Total: ${{ "%.2f"|format(factura.total) }}</strong></p>
+    </div>
+</body>
+</html>
