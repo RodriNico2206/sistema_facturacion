@@ -1,0 +1,39 @@
+sistema_facturacion/
+├── main.py                          # Punto de entrada principal
+├── app.py                           # Clase principal de la aplicación
+├── database.py                      # Manejo de base de datos (ya existente)
+├── invoice_generator.py             # Generador de PDFs (ya existente)
+├── requirements.txt                 # Dependencias del proyecto
+├── README.md                        # Documentación del proyecto
+│
+├── models/                          # Modelos de datos
+│   ├── __init__.py
+│   ├── cliente.py
+│   ├── producto.py
+│   ├── factura.py
+│   ├── detalle_factura.py
+│   ├── configuracion.py
+│   └── cupon.py
+│
+├── views/                           # Vistas de la interfaz gráfica
+│   ├── __init__.py
+│   ├── facturacion_view.py
+│   ├── clientes_view.py
+│   ├── productos_view.py
+│   ├── configuracion_view.py
+│   └── cupones_view.py
+│
+├── dialogs/                         # Diálogos y ventanas emergentes
+│   ├── __init__.py
+│   ├── cliente_dialog.py
+│   ├── producto_dialog.py
+│   ├── cupon_dialog.py
+│   └── cliente_manual_dialog.py
+│
+├── utils/                           # Utilidades y helpers
+│   ├── __init__.py
+│   ├── excel_utils.py
+│   └── config_manager.py
+│
+└── output/                          # Carpeta para facturas generadas (PDFs)
+    └── .gitkeep                     # Archivo para mantener la carpeta en Git
