@@ -21,6 +21,7 @@ sistema_facturacion/
 │   ├── clientes_view.py
 │   ├── productos_view.py
 │   ├── configuracion_view.py
+|   ├── facturas_view.py
 │   └── cupones_view.py
 │
 ├── dialogs/                         # Diálogos y ventanas emergentes
@@ -33,7 +34,10 @@ sistema_facturacion/
 ├── utils/                           # Utilidades y helpers
 │   ├── __init__.py
 │   ├── excel_utils.py
-│   └── config_manager.py
+│   ├── pdf_converter_module.py
+|   ├── whatsapp_sender_module.py
+|   ├── invoice_generator.py
+|   └── config_manager.py
 │
 └── output/                          # Carpeta para facturas generadas (PDFs)
     └── .gitkeep                     # Archivo para mantener la carpeta en Git
