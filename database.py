@@ -1,4 +1,4 @@
-import sqlite3
+import sqlite3, hashlib
 from datetime import datetime
 
 class Database:
@@ -8,6 +8,22 @@ class Database:
     
     def create_tables(self):
         cursor = self.conn.cursor()
+        
+        # Tabla de usuarios
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                nombre TEXT NOT NULL,
+                email TEXT,
+                activo INTEGER DEFAULT 1,
+                fecha_creacion TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Resto de las tablas existentes (clientes, productos, etc.)
+        # ... (el resto de tu código existente)
         
         # Tabla de clientes (cambiamos RUC por DNI)
         cursor.execute('''
@@ -96,9 +112,35 @@ class Database:
                 "INSERT INTO configuracion (porcentaje_iva, descuento_efectivo) VALUES (?, ?)",
                 (12.0, 5.0)
             )
+
+        # Insertar usuario admin por defecto si no existe
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        if cursor.fetchone()[0] == 0:
+            password_hash = self.hash_password("admin123")
+            cursor.execute(
+                "INSERT INTO usuarios (username, password, nombre, email) VALUES (?, ?, ?, ?)",
+                ("admin", password_hash, "Administrador", "admin@empresa.com")
+            )
         
         self.conn.commit()
+
+    def hash_password(self, password):
+        """Encripta la contraseña usando SHA-256"""
+        return hashlib.sha256(password.encode()).hexdigest()
     
+    def verificar_usuario(self, username, password):
+        """Verifica las credenciales del usuario"""
+        cursor = self.conn.cursor()
+        password_hash = self.hash_password(password)
+        
+        cursor.execute(
+            "SELECT id, username, nombre FROM usuarios WHERE username = ? AND password = ? AND activo = 1",
+            (username, password_hash)
+        )
+        
+        return cursor.fetchone()
+
+
     def execute_query(self, query, params=()):
         cursor = self.conn.cursor()
         cursor.execute(query, params)

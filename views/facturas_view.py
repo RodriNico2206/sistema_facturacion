@@ -124,8 +124,8 @@ class FacturasView:
             return
             
         numero_factura = self.factura_seleccionada[1]
-        #pdf_path = fr"C:\Users\Usuario\Documents\sistema_facturacion\facturas\factura_{numero_factura}.pdf"
         pdf_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "facturas", f"factura_{numero_factura}.pdf")
+        
         try:
             if os.name == 'nt':  # Windows
                 os.startfile(pdf_path)

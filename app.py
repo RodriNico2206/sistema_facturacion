@@ -9,6 +9,7 @@ from views.configuracion_view import ConfiguracionView
 from views.cupones_view import CuponesView
 from views.facturas_view import FacturasView
 from utils.config_manager import ConfigManager
+from views.usuarios_view import UsuariosView
 
 class FacturacionApp:
     def __init__(self, root):
@@ -37,6 +38,7 @@ class FacturacionApp:
         self.clientes_view = ClientesView(self.notebook, self)
         self.productos_view = ProductosView(self.notebook, self)
         self.configuracion_view = ConfiguracionView(self.notebook, self)
+        self.usuarios_view = UsuariosView(self.notebook, self)
         self.cupones_view = CuponesView(self.notebook, self)
         self.facturas_view = FacturasView(self.notebook, self)
         
@@ -46,6 +48,7 @@ class FacturacionApp:
         self.notebook.add(self.productos_view.frame, text="Productos")
         self.notebook.add(self.facturas_view.frame, text="Facturas")
         self.notebook.add(self.configuracion_view.frame, text="Configuración")
+        self.notebook.add(self.usuarios_view.frame, text="Usuarios")
         self.notebook.add(self.cupones_view.frame, text="Cupones")
 
     def load_data(self):
