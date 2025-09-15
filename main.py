@@ -8,6 +8,7 @@ class SistemaFacturacion:
     def __init__(self):
         self.db = Database()
         self.root = tk.Tk()
+        self.usuario_actual = None  # Almacenar usuario actual
         self.mostrar_login()
     
     def mostrar_login(self):
@@ -17,10 +18,11 @@ class SistemaFacturacion:
         
         LoginWindow(login_root, self.db, self.iniciar_aplicacion_principal)
     
-    def iniciar_aplicacion_principal(self):
+    def iniciar_aplicacion_principal(self, usuario):
         """Inicia la aplicación principal después del login exitoso"""
-        self.root.deiconify()  # Muestra la ventana principal
-        self.app = FacturacionApp(self.root)
+        self.usuario_actual = usuario  # Almacenar usuario
+        self.root.deiconify()
+        self.app = FacturacionApp(self.root, self.usuario_actual)  # Pasar usuario a la app
     
     def cerrar_aplicacion(self):
         """Cierra completamente la aplicación"""

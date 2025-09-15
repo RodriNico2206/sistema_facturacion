@@ -6,8 +6,27 @@ class UsuariosView:
     def __init__(self, parent, app):
         self.app = app
         self.frame = ttk.Frame(parent)
-        self.setup_ui()
         
+        # Verificar permisos antes de setup
+        if not self.app.es_administrador():
+            self.mostrar_mensaje_sin_permisos()
+        else:
+            self.setup_ui()
+
+    def mostrar_mensaje_sin_permisos(self):
+        """Muestra mensaje de falta de permisos"""
+        mensaje_frame = ttk.Frame(self.frame)
+        mensaje_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        ttk.Label(mensaje_frame, text="⛔ Acceso Restringido", 
+                 font=("Arial", 14, "bold"), foreground="red").pack(pady=10)
+        
+        ttk.Label(mensaje_frame, text="No tiene permisos para acceder a esta sección.", 
+                 font=("Arial", 11)).pack(pady=5)
+        
+        ttk.Label(mensaje_frame, text="Solo los administradores pueden gestionar usuarios.", 
+                 font=("Arial", 10), foreground="gray").pack(pady=5)
+
     def setup_ui(self):
         # Treeview para usuarios
         columns = ('id', 'username', 'nombre', 'email', 'activo')
@@ -43,11 +62,17 @@ class UsuariosView:
             ))
     
     def agregar_usuario(self):
+        if not self.app.es_administrador():
+            messagebox.showerror("Error", "Solo los administradores pueden crear usuarios")
+            return
         self.mostrar_dialogo_usuario()
     
     def editar_usuario(self):
         selection = self.usuarios_tree.selection()
         if selection:
+            if not self.app.es_administrador():
+                messagebox.showerror("Error", "Solo los administradores pueden editar usuarios")
+                return
             item = self.usuarios_tree.item(selection[0])
             self.mostrar_dialogo_usuario(item['values'])
         else:

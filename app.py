@@ -12,7 +12,7 @@ from utils.config_manager import ConfigManager
 from views.usuarios_view import UsuariosView
 
 class FacturacionApp:
-    def __init__(self, root):
+    def __init__(self, root, usuario_actual=None):
         self.root = root
         self.root.title("Sistema de Facturación")
         self.root.geometry("1200x700")
@@ -20,6 +20,7 @@ class FacturacionApp:
         self.db = Database()
         self.invoice_gen = InvoiceGenerator()
         self.config_manager = ConfigManager(self.db)
+        self.usuario_actual = usuario_actual  # Almacenar usuario actual
         
         self.current_factura = None
         self.detalles_temp = []
@@ -38,18 +39,37 @@ class FacturacionApp:
         self.clientes_view = ClientesView(self.notebook, self)
         self.productos_view = ProductosView(self.notebook, self)
         self.configuracion_view = ConfiguracionView(self.notebook, self)
-        self.usuarios_view = UsuariosView(self.notebook, self)
         self.cupones_view = CuponesView(self.notebook, self)
         self.facturas_view = FacturasView(self.notebook, self)
         
-        # Añadir las pestañas
+        # Añadir las pestañas básicas (siempre visibles)
         self.notebook.add(self.facturacion_view.frame, text="Facturación")
         self.notebook.add(self.clientes_view.frame, text="Clientes")
         self.notebook.add(self.productos_view.frame, text="Productos")
-        self.notebook.add(self.facturas_view.frame, text="Facturas")
         self.notebook.add(self.configuracion_view.frame, text="Configuración")
-        self.notebook.add(self.usuarios_view.frame, text="Usuarios")
         self.notebook.add(self.cupones_view.frame, text="Cupones")
+        self.notebook.add(self.facturas_view.frame, text="Facturas")
+        
+        # Añadir pestaña de usuarios SOLO si es administrador
+        if self.es_administrador():
+            self.usuarios_view = UsuariosView(self.notebook, self)
+            self.notebook.add(self.usuarios_view.frame, text="Usuarios")
+        
+        # Mostrar información del usuario en la barra de título
+        self.actualizar_titulo_ventana()
+
+    def es_administrador(self):
+        """Verifica si el usuario actual es administrador"""
+        return self.usuario_actual and self.usuario_actual[5] == 'admin'  # índice 5 = rol
+
+    def actualizar_titulo_ventana(self):
+        """Actualiza el título de la ventana con información del usuario"""
+        if self.usuario_actual:
+            nombre = self.usuario_actual[3]  # índice 3 = nombre
+            rol = self.usuario_actual[5]     # índice 5 = rol
+            self.root.title(f"Sistema de Facturación - {nombre} ({rol})")
+        else:
+            self.root.title("Sistema de Facturación")
 
     def load_data(self):
         self.clientes_view.load_clientes()

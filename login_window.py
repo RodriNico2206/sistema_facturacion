@@ -9,6 +9,7 @@ class LoginWindow:
         self.db = db
         self.on_login_success = on_login_success
         self.mostrar_password = False  # Estado para controlar si se muestra la contraseña
+        self.usuario_actual = None  # Almacenar información del usuario
         
         self.root.title("Sistema de Facturación - Login")
         self.root.geometry("400x350")
@@ -121,9 +122,13 @@ class LoginWindow:
         try:
             usuario = self.db.verificar_usuario(username, password)
             if usuario:
+                # Almacenar información completa del usuario
+                usuario_completo = self.db.obtener_usuario_por_id(usuario[0])
+                self.usuario_actual = usuario_completo
+                
                 messagebox.showinfo("Éxito", f"Bienvenido, {usuario[2]}!")
                 self.root.destroy()
-                self.on_login_success()
+                self.on_login_success(self.usuario_actual)  # Pasar información del usuario
             else:
                 messagebox.showerror("Error", "Usuario o contraseña incorrectos")
         except Exception as e:
